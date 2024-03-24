@@ -1,10 +1,11 @@
 import sys
 import datetime
-import logFunctions
+from logFunctions import *
+from dictFunctions import *
 
 
 def read_log():
-    logs = []
+    nasa_logs = []
     # line = ("rs6000.cmp.ilstu.edu - - [21/Jul/1995:00:43:42 -0400] \"GET "
     #         "/shuttle/technology/sts-newsref/stsref-toc.html HTTP/1.0\" 200 84905")
     for line in sys.stdin:
@@ -29,10 +30,10 @@ def read_log():
         except ValueError:
             bytes_sent = parts[-1]
 
-        logs.append((host, timestamp, request, status_code, bytes_sent))
-    return logs
+        nasa_logs.append((host, timestamp, request, status_code, bytes_sent))
+    return nasa_logs
 
 
 if __name__ == "__main__":
     logs = read_log()
-    logFunctions.print_entries(logFunctions.get_entries_by_extension(logs, ".gif"))
+    print_dict_entry_dates(log_to_dict(logs))
