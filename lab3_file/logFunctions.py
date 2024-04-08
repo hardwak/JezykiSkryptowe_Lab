@@ -1,5 +1,5 @@
 
-def sort_log(logs, element):
+def sort_log(logs, element: int):
     try:
         sorted_logs = sorted(logs, key=lambda log: log[element])
         return sorted_logs
