@@ -15,7 +15,7 @@ def create_backup_zip(source_dir, backup_dir):
         os.makedirs(backup_dir)
 
     shutil.make_archive(backup_path, 'zip', source_dir)
-    return backup_path
+    return backup_file_name
 
 
 def update_backup_history(backup_dir, backup_record):
@@ -26,10 +26,10 @@ def update_backup_history(backup_dir, backup_record):
             history = json.load(file)
             history.insert(0, backup_record)
             file.seek(0)
-            json.dump(history, file, indent=4)
+            json.dump(history, file, indent=5)
     else:
         with open(history_path, 'w') as file:
-            json.dump([backup_record], file, indent=4)
+            json.dump([backup_record], file, indent=5)
 
 
 
@@ -40,12 +40,11 @@ if __name__ == "__main__":
     #     sys.exit(1)
     #
     # source_dir = sys.argv[1]
-    source_dir = "C:\\Study\\Programming\\Python\\JezykiSkryptowe_Lab\\lab4"
+    source_dir = "C:\\Study\\Programming\\Python\\JezykiSkryptowe_Lab\\lab4\\for backups"
     backup_dir = os.getenv('BACKUPS_DIR', os.path.join(os.path.expanduser('~'), '.backups'))
 
-    create_backup_zip(source_dir, backup_dir)
-
     backup_record = {
+        'name': create_backup_zip(source_dir, backup_dir),
         'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'location': os.path.abspath(source_dir),
         'folder': os.path.basename(backup_dir)
