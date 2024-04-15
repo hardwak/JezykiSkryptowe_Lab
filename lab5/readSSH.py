@@ -1,10 +1,14 @@
 import re
 import sys
+import logging
 from collections import namedtuple
 from datetime import datetime
+import random
 
-# Declaring namedtuple()
 log = namedtuple('log', ['date', 'name', 'num', 'message'])
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='readSSH.log', level=logging.INFO)
 
 
 def read_ssh_logs(filename):
@@ -79,28 +83,70 @@ def get_message_type(entry):
     invalid_user_pattern = re.compile(r'Invalid user')
     break_in_attempt_pattern = re.compile(r'POSSIBLE BREAK-IN ATTEMPT!')
 
+    bytes_read = len(entry.message)
+    logger.debug(f'Received {bytes_read} bytes')
+
     if successful_login_pattern.search(entry.message):
+        logger.info('Successfully logged in')
         return "Successful login"
     elif failed_login_pattern.search(entry.message):
+        logger.warning("Failed password")
         return "Failed password"
     elif connection_closed_pattern.search(entry.message):
+        logger.warning("Connection closed")
         return "Connection closed"
     elif invalid_password_pattern.search(entry.message):
+        logger.error("Invalid password")
         return "Invalid password"
     elif invalid_user_pattern.search(entry.message):
+        logger.error("Invalid user")
         return "Invalid user"
     elif break_in_attempt_pattern.search(entry.message):
+        logger.critical("BREAK-IN ATTEMPT")
         return "BREAK-IN ATTEMPT"
     else:
         return "Another message"
 
 
+def get_random_entries_for_random_user(logs, n):
+    entries_with_users = dict()
+
+    for entry in logs:
+        user_entry = get_user_from_log(entry)
+        if user_entry is not None:
+            if user_entry not in entries_with_users:
+                entries_with_users[user_entry] = [entry]
+            else:
+                entries_with_users[user_entry].append(entry)
+
+    users = list(entries_with_users.keys())
+    user = random.choice(users)
+    selected_logs = random.sample(entries_with_users[user], n)
+    return selected_logs
+
+
+def most_common_and_rarest_entries(logs):
+    entries_with_users = dict()
+
+    for entry in logs:
+        user_entry = get_user_from_log(entry)
+        if user_entry is not None and get_message_type(entry) == "Successful login":
+            if user_entry not in entries_with_users:
+                entries_with_users.setdefault(user_entry, [entry])
+            else:
+                entries_with_users[user_entry].append(entry)
+
+    rarest_user = min(entries_with_users, key=lambda user: len(entries_with_users[user]))
+    most_common = max(entries_with_users, key=lambda user: len(entries_with_users[user]))
+
+    return rarest_user, most_common
+
+
 def print_logs(list):
     for entry in list:
-        print(get_message_type(entry))
+        print(entry)
 
 
 if __name__ == '__main__':
-    print_logs(
-        read_ssh_logs(
-            "SSH.log"))
+    logs = read_ssh_logs("SSH.log")
+    print(most_common_and_rarest_entries(logs))
