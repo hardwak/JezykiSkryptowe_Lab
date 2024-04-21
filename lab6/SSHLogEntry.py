@@ -1,7 +1,6 @@
 from datetime import datetime
 from ipaddress import IPv4Address
 import re
-import lab5.readSSH as ssh
 import abc
 
 
@@ -36,7 +35,11 @@ class SSHLogEntry(abc.ABC):
         else:
             return NotImplemented
 
-    def getIPv4Address(self):
+    @property
+    def raw_message(self):
+        return self._raw_message
+
+    def get_ip_v4_address(self):
         ipv4_pattern = re.compile(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b')
         match = ipv4_pattern.search(self._raw_message)
         if match:
@@ -78,15 +81,15 @@ class SSHLogEntry_FailedPassword(SSHLogEntry):
         data = match.groups()
 
         return (datetime.strptime(data[0], '%b %d %H:%M:%S') == self.date and
-                data[1] == self.name and
+                data[2] == self.name and
                 int(data[3]) == self.pid and
                 data[4].startswith("Failed password"))
 
 
 class SSHLogEntry_AcceptedPassword(SSHLogEntry):
     def __init__(self, date: datetime, name, pid: int, raw_message):
-        failed_password_pattern = re.compile(r'\bAccepted password\b')
-        if not failed_password_pattern.search(raw_message):
+        accepted_password_pattern = re.compile(r'\bAccepted password\b')
+        if not accepted_password_pattern.search(raw_message):
             raise ValueError("This Log Entry do not represent an accepted password")
 
         super().__init__(date, name, pid, raw_message)
@@ -105,15 +108,15 @@ class SSHLogEntry_AcceptedPassword(SSHLogEntry):
         data = match.groups()
 
         return (datetime.strptime(data[0], '%b %d %H:%M:%S') == self.date and
-                data[1] == self.name and
+                data[2] == self.name and
                 int(data[3]) == self.pid and
                 data[4].startswith("Accepted password"))
 
 
 class SSHLogEntry_Error(SSHLogEntry):
     def __init__(self, date: datetime, name, pid: int, raw_message):
-        failed_password_pattern = re.compile(r'\berror:\b')
-        if not failed_password_pattern.search(raw_message):
+        error_pattern = re.compile(r'\berror\b')
+        if not error_pattern.search(raw_message):
             raise ValueError("This Log Entry do not represent an error")
 
         super().__init__(date, name, pid, raw_message)
@@ -132,7 +135,7 @@ class SSHLogEntry_Error(SSHLogEntry):
         data = match.groups()
 
         return (datetime.strptime(data[0], '%b %d %H:%M:%S') == self.date and
-                data[1] == self.name and
+                data[2] == self.name and
                 int(data[3]) == self.pid and
                 data[4].startswith("error:"))
 
@@ -146,15 +149,3 @@ class SSHLogEntry_Other(SSHLogEntry):
 
     def validate(self):
         return True
-
-
-if __name__ == '__main__':
-    line = ("Dec 10 09:19:06 LabSZ sshd[24653]: Failed password for invalid user test1 from 187.141.143.180 port 46519 "
-            "ssh2")
-
-    log = ssh.parse_line(line)
-    logEntry = SSHLogEntry_FailedPassword(log.date, log.name, log.num, line)
-    print(logEntry)
-    print(logEntry.getIPv4Address())
-    print(logEntry.validate())
-    print(logEntry.has_ip)
