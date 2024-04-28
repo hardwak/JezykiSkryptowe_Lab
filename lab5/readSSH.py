@@ -134,12 +134,12 @@ def get_random_entries_for_random_user(logs, n):
     entries_with_users = dict()
 
     for entry in logs:
-        user_entry = get_user_from_log(entry)
-        if user_entry is not None:
-            if user_entry not in entries_with_users:
-                entries_with_users[user_entry] = [entry]
+        entry_user = get_user_from_log(entry)
+        if entry_user is not None:
+            if entry_user not in entries_with_users:
+                entries_with_users[entry_user] = [entry]
             else:
-                entries_with_users[user_entry].append(entry)
+                entries_with_users[entry_user].append(entry)
 
     users = list(entries_with_users.keys())
     user = random.choice(users)
@@ -155,10 +155,10 @@ def calculate_durations(logs):
     for entry in logs:
 
         if get_message_type(entry) == "Successful login":
-            start_time = entry[0]
+            start_time = entry['date']
 
         elif get_message_type(entry) == "Session closed":
-            end_time = entry[0]
+            end_time = entry['date']
             time = (end_time - start_time).total_seconds()
 
             durations.append(time)
