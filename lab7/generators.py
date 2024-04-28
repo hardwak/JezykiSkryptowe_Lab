@@ -1,6 +1,7 @@
 import functools
+import logging
 
-from lab7.decorators import log_func_decorator
+import lab7.decorators as dec
 
 
 def make_generator(func):
@@ -10,7 +11,7 @@ def make_generator(func):
         n += 1
 
 
-@log_func_decorator
+@dec.log_func_decorator
 def square(x):
     return x ** 2
 
@@ -18,6 +19,15 @@ def square(x):
 def make_generator_mem(func):
     functools.cache(func)
     return make_generator(func)
+
+
+@dec.log_object_created
+class TestClass:
+    def __init__(self):
+        pass
+
+    def do_something(self):
+        print("do_something")
 
 
 if __name__ == '__main__':
@@ -29,3 +39,7 @@ if __name__ == '__main__':
     gen2 = make_generator(lambda x: x ** 2)
     for _ in range(10):
         print(next(gen2), end=' ')
+
+    list_of_objects = []
+    for _ in range(5):
+        list_of_objects.append(TestClass())
